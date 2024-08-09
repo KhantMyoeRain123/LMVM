@@ -11,7 +11,7 @@ LMVM is driven by the idea of code-sharing, particularly tool-sharing. Developer
 
 LMVM's power is best demonstrated through a simple example. In this repository, you'll find two key folders that make LMVM work: `lmvm_files` and `tools`.
 
-- The `lmvm_files` folder contains `.lmvm` files, which define the tools an agent will use. For example, the file `math.lmvm` might contain:
+- The `lmvm_files` folder contains `.lmvm` files, which define the tools an agent will use. For example, the file `math.lmvm` currently in the `lmvm_files` folder contains:
 
   ```
   math_tools
