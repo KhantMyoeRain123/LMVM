@@ -144,13 +144,37 @@ class CohereRunner(Runner):
                 print(tool)
                 self._tools.append(tool)
     def run(self,prompt):
+        #create the tool dicts
+        self.create_tool_dicts()
         response=self.co.chat(
             model="command-r-plus",
             chat_history=self.chat_history,
-            message=prompt
+            message=prompt,
+            force_single_step=False,
+            tools=self._tools,
+            preamble=self.sys_prompt,
+            temperature=0
         )
+        self.chat_history.append(response.chat_history[-1])
+        while response.tool_calls:
+            print(response.text)
+            tool_results=[]
+            current_call_result={'call':response.tool_calls[0],'outputs':self._exec_environment[response.tool_calls[0].name](**response.tool_calls[0].parameters)}
+            tool_results.append(current_call_result)
+            response = self.co.chat(
+            model="command-r-plus",
+            chat_history=self.chat_history,
+            message="",
+            force_single_step=False,
+            tools=self._tools,
+            tool_results=tool_results,
+            preamble=self.sys_prompt,
+            temperature=0
+            )
+            self.chat_history.append(response.chat_history[-1])
         print(response.text)
-        self.chat_history=response.chat_history
+        
+        
         
 
 if __name__=="__main__":
@@ -158,10 +182,19 @@ if __name__=="__main__":
     tool_names=r.read()
     e=Extractor(tool_names)
     func_details,import_statements=e.extract()
-    cr=CohereRunner(func_details,'',api_key='anrMxWD8pmfgasIwxNcQx3yGZgPxrapijbntnz2W')
-    cr.create_tool_dicts()
-    cr.run("The secret word is 'fish', remember that.")
-    cr.run("What is the secret word?")
+    cr=CohereRunner(func_details,sys_prompt='''
+    ## Task & Context
+    You will help answer math questions. Your job is to use tools to answer them. Use the tools one by one to figure out the answer.
+    ## IMPORTANT
+    -Follow PEDMAS
+    -Make a list for the solution plan.
+    -For each step choose EXACTLY ONE TOOL that executes the step.
+    -Do not assume anything that does not come as a result from tool usage.
+    ## Style Guide
+    Be friendly and recheck your work.
+    
+''',api_key='anrMxWD8pmfgasIwxNcQx3yGZgPxrapijbntnz2W')
+    cr.run("4-5/125+6?")
 
     
 
