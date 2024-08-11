@@ -1,6 +1,11 @@
 import os
 import ast
 import subprocess
+
+import inspect
+
+import cohere
+
 #This reads the lmvm files
 #lmvm files contain names of tools that will be used for the agent
 #the first line specifies the LLM to use:[openai, claude, cohere,...]
@@ -83,18 +88,21 @@ class Extractor:
 
 #this is the base class that interfaces with the llm and calls the tools
 class Runner:
-    def __init__(self,func_details,sys_prompt,api_key=''):
+
+    def __init__(self,func_details,sys_prompt,chat_history=[],api_key=''):
         self.func_details=func_details
         self._exec_environment={}
         self.sys_prompt=sys_prompt
         self.api_key=api_key
-    
+        self.chat_history=chat_history
+        self._tools=[]
+        self.set_up_environ()
     def set_up_environ(self):
         #execute imports and function definitions
         for func_name,details in self.func_details.items():
             exec(details['source_code'],self._exec_environment)
     
-    def create_tool_dict(self):
+    def create_tool_dicts(self):
         pass
     
     def run(self,prompt):
@@ -102,23 +110,59 @@ class Runner:
     
 
 class OpenAIRunner(Runner):
-    def create_tool_dict(self):
-        return super().create_tool_dict()
+    def create_tool_dicts(self):
+        return super().create_tool_dicts()
 
 class ClaudeRunner(Runner):
-    def create_tool_dict(self):
-        return super().create_tool_dict()
+    def create_tool_dicts(self):
+        return super().create_tool_dicts()
     
 
 class CohereRunner(Runner):
-    def create_tool_dict(self):
-        return super().create_tool_dict()
+    def __init__(self, func_details, sys_prompt, chat_history=[], api_key=''):
+        super().__init__(func_details, sys_prompt, chat_history, api_key)
+        self.co=cohere.Client(self.api_key)
+    def create_tool_dicts(self):
+        for func_name in self._exec_environment:
+            if(func_name!="__builtins__"):
+                tool={
+                    "name":func_name,
+                    "parameter_definitions":{
+                    }
+                }
+                #add parameters of the function to parameter_definitions
+                function=self._exec_environment[func_name]
+                signature=inspect.signature(function)
+                parameters=signature.parameters
+                for param_name,param in parameters.items():
+                    tool["parameter_definitions"].update(
+                        {param_name:{
+                        "description":"",
+                        "type":param.annotation,
+                        "required": True}}
+                        )
+                print(tool)
+                self._tools.append(tool)
+    def run(self,prompt):
+        response=self.co.chat(
+            model="command-r-plus",
+            chat_history=self.chat_history,
+            message=prompt
+        )
+        print(response.text)
+        self.chat_history=response.chat_history
+        
 
 if __name__=="__main__":
     r=Reader("math.lmvm")
     tool_names=r.read()
-    c=Extractor(tool_names)
-    c.extract()
+    e=Extractor(tool_names)
+    func_details,import_statements=e.extract()
+    cr=CohereRunner(func_details,'',api_key='anrMxWD8pmfgasIwxNcQx3yGZgPxrapijbntnz2W')
+    cr.create_tool_dicts()
+    cr.run("The secret word is 'fish', remember that.")
+    cr.run("What is the secret word?")
+
     
 
 
