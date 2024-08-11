@@ -1,7 +1,6 @@
 import os
 import ast
 import subprocess
-
 import inspect
 
 import cohere
@@ -59,7 +58,7 @@ class Extractor:
         func_details={}
         for func in functions:
             func_code=self.get_function_source(func)
-            func_details[func.name]={"source_code":func_code}
+            func_details[func.name]={"source_code":func_code,"description":ast.get_docstring(func)}
         import_statements = [self.get_import_source(imp) for imp in imports]
         
         return func_details,import_statements
@@ -89,7 +88,7 @@ class Extractor:
 #this is the base class that interfaces with the llm and calls the tools
 class Runner:
 
-    def __init__(self,func_details,sys_prompt,chat_history=[],api_key=''):
+    def __init__(self,func_details,sys_prompt='',chat_history=[],api_key=''):
         self.func_details=func_details
         self._exec_environment={}
         self.sys_prompt=sys_prompt
@@ -119,14 +118,15 @@ class ClaudeRunner(Runner):
     
 
 class CohereRunner(Runner):
-    def __init__(self, func_details, sys_prompt, chat_history=[], api_key=''):
-        super().__init__(func_details, sys_prompt, chat_history, api_key)
+    def __init__(self, func_details, sys_prompt='',chat_history=[], api_key=''):
+        super().__init__(func_details, sys_prompt,chat_history, api_key)
         self.co=cohere.Client(self.api_key)
     def create_tool_dicts(self):
         for func_name in self._exec_environment:
             if(func_name!="__builtins__"):
                 tool={
                     "name":func_name,
+                    "description": self.func_details[func_name]['description'],
                     "parameter_definitions":{
                     }
                 }
@@ -138,7 +138,7 @@ class CohereRunner(Runner):
                     tool["parameter_definitions"].update(
                         {param_name:{
                         "description":"",
-                        "type":param.annotation,
+                        "type":param.annotation.__name__,
                         "required": True}}
                         )
                 print(tool)

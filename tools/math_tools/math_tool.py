@@ -1,5 +1,5 @@
 def add(a:int,b:int):
-    return a+b
-
-def add(a,b):
+    """
+    Adds two numbers a and b.
+    """
     return a+b
