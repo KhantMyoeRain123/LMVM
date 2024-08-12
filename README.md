@@ -23,7 +23,7 @@ LMVM's power is best demonstrated through a simple example. In this repository, 
 - The `tools` folder is where these tools are stored, including those downloaded from Tool Hub. By running the `math.lmvm` file in LMVM, LMVM will load the specified tools from this folder, allowing the agent to use them immediately.
 
 ### LLM Support
-As of right now, I aim to start by supporting Claude because I could not get access to the OpenAI API. However, at the moment, I do have plans to implement Runners for OpenAI, Claude and Cohere. 
+As of right now, I aim to start by supporting Cohere because I could not get access to the OpenAI API. However, at the moment, I do have plans to implement Runners for OpenAI, Claude and Cohere. 
 
 ### How to Contribute
-Since this is an open-source project, contribution is welcome!! To help you guys do so, I am going to write a documentation on LMVM which should detail the inner workings of the system. But that will be for later. As of right now, I am going to finish up the support from Claude and see if this whole system actually amounts to something.__
+Since this is an open-source project, contribution is welcome!! To help you guys do so, I am going to write a documentation on LMVM which should detail the inner workings of the system. But that will be for later. As of right now, I am going to finish up the support from Cohere and see if this whole system actually amounts to something.
