@@ -174,27 +174,45 @@ class CohereRunner(Runner):
             self.chat_history.append(response.chat_history[-1])
         print(response.text)
         
-        
-        
-
-if __name__=="__main__":
-    r=Reader("math.lmvm")
+import argparse
+def main():
+    parser = argparse.ArgumentParser(description="Runs a .lmvm file that contains the agent specification.")
+    parser.add_argument('input', type=str, help='Name of .lmvm file.')
+    parser.add_argument('--llm', type=str,choices=['openai','claude','cohere'],help='LLM to use.')
+    args=parser.parse_args()
+    input_file=args.input
+    llm=args.llm
+    func_details,import_statements=read_file_and_extract(input_file)
+    if llm=='openai':
+        pass
+    elif llm=='claude':
+        pass
+    elif llm=='cohere':
+        cr=CohereRunner(func_details,sys_prompt='''
+        ## Task & Context
+        You will help answer math questions. Your job is to use tools to answer them. Use the tools one by one to figure out the answer.
+        ## IMPORTANT
+        -Follow PEDMAS
+        -Make a list for the solution plan.
+        -For each step choose EXACTLY ONE TOOL that executes the step.
+        -Do not assume anything that does not come as a result from tool usage.
+        ## Style Guide
+        Be friendly and recheck your work.
+    ''',api_key='anrMxWD8pmfgasIwxNcQx3yGZgPxrapijbntnz2W')
+        cr.run("4-5/125+6?")
+    
+def read_file_and_extract(input_file):
+    r=Reader(input_file)
     tool_names=r.read()
     e=Extractor(tool_names)
     func_details,import_statements=e.extract()
-    cr=CohereRunner(func_details,sys_prompt='''
-    ## Task & Context
-    You will help answer math questions. Your job is to use tools to answer them. Use the tools one by one to figure out the answer.
-    ## IMPORTANT
-    -Follow PEDMAS
-    -Make a list for the solution plan.
-    -For each step choose EXACTLY ONE TOOL that executes the step.
-    -Do not assume anything that does not come as a result from tool usage.
-    ## Style Guide
-    Be friendly and recheck your work.
+    return func_details,import_statements
     
-''',api_key='anrMxWD8pmfgasIwxNcQx3yGZgPxrapijbntnz2W')
-    cr.run("4-5/125+6?")
+
+
+if __name__=="__main__":
+    main()
+    
 
     
 
